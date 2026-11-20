@@ -1,0 +1,153 @@
+### Base
+@host = http://localhost:8080
+
+### 1) Login as seeded Alice
+# @name loginAlice
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "Str0ngPass!"
+}
+
+###
+@aliceToken = {{loginAlice.response.body.token}}
+
+### 2) List accounts
+GET {{host}}/api/accounts?page=0&size=10
+Authorization: Bearer {{aliceToken}}
+
+### 3) List categories
+GET {{host}}/api/categories?page=0&size=10
+Authorization: Bearer {{aliceToken}}
+
+### 4) List transactions filtered by type/date
+GET {{host}}/api/transactions?type=EXPENSE&from=2026-10-01&to=2026-10-31&page=0&size=20
+Authorization: Bearer {{aliceToken}}
+
+### 5) Create valid transaction
+# @name createTx
+POST {{host}}/api/transactions
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+{
+  "accountId": 2001,
+  "categoryId": 3002,
+  "type": "EXPENSE",
+  "amount": 45.75,
+  "description": "Snacks",
+  "date": "2026-10-12"
+}
+
+###
+@txId = {{createTx.response.body.id}}
+
+### 6) Get created transaction
+GET {{host}}/api/transactions/{{txId}}
+Authorization: Bearer {{aliceToken}}
+
+### 7) Insights overview
+GET {{host}}/api/insights/overview
+Authorization: Bearer {{aliceToken}}
+
+### 8) Insights by category
+GET {{host}}/api/insights/by-category?from=2026-10-01&to=2026-10-31
+Authorization: Bearer {{aliceToken}}
+
+### 9) Insights monthly
+GET {{host}}/api/insights/monthly
+Authorization: Bearer {{aliceToken}}
+
+### 10) Validation error (amount must be >= 0.01)
+POST {{host}}/api/transactions
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+{
+  "accountId": 2001,
+  "categoryId": 3002,
+  "type": "EXPENSE",
+  "amount": 0.00,
+  "description": "Invalid amount",
+  "date": "2026-10-12"
+}
+
+### 11) Auth error (missing token)
+GET {{host}}/api/accounts
+
+### 12) Not found error
+GET {{host}}/api/accounts/999999
+Authorization: Bearer {{aliceToken}}
+
+
+
+
+### 1) Login with seeded user (expect 200)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "Str0ngPass!"
+}
+
+### 2) Capture token from login response
+@token = {{login.response.body.token}}
+
+### 3) Check token exists by calling protected endpoint (expect 200)
+GET {{host}}/api/accounts?page=0&size=5
+Authorization: Bearer {{token}}
+
+### 4) Missing token should fail (expect 401)
+GET {{host}}/api/accounts?page=0&size=5
+
+### 5) Invalid token should fail (expect 401)
+GET {{host}}/api/accounts?page=0&size=5
+Authorization: Bearer invalid.token.value
+
+### 6) Wrong password should fail (expect 401)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "WrongPass!"
+}
+
+### 7) Non-existent user should fail (expect 401)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nouser@example.com",
+  "password": "Str0ngPass!"
+}
+
+### 8) Register new user then login (expect 201 then 200)
+# @name registerNew
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Temp User",
+  "email": "temp.user.2026@example.com",
+  "password": "Str0ngPass!"
+}
+
+###
+# @name loginNew
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "temp.user.2026@example.com",
+  "password": "Str0ngPass!"
+}
+
+### 9) Use newly issued token on protected endpoint (expect 200)
+@newToken = {{loginNew.response.body.token}}
+GET {{host}}/api/categories?page=0&size=5
+Authorization: Bearer {{newToken}}

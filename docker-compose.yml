@@ -1,0 +1,28 @@
+services:
+  oracle:
+    image: registry.saas.cagip.group.gca/artifactory/gvenzl/oracle-xe:21-slim-faststart
+    # Oracle XE images are x86; on Apple Silicon this runs under emulation.
+    platform: linux/amd64
+    container_name: fincore-oracle
+    ports:
+      - "1521:1521"          # Oracle listener (matches application-oracle.properties)
+      - "5500:5500"          # Enterprise Manager Express (optional)
+    environment:
+      # SYS/SYSTEM password
+      ORACLE_PASSWORD: oracle
+      # Application schema auto-created on first boot (matches the oracle profile)
+      APP_USER: fincore
+      APP_USER_PASSWORD: fincore
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+    restart: unless-stopped
+
+volumes:
+  oracle-data:
+

@@ -1,0 +1,84 @@
+### FinCore API — sample requests (use with the IntelliJ/VS Code HTTP client)
+@host = http://localhost:8080
+
+### 1. Register a user
+# @name register
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "Str0ngPass!"
+}
+
+### 2. Login (captures token)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane@example.com",
+  "password": "Str0ngPass!"
+}
+
+@token = {{login.response.body.token}}
+
+### 3. Create an account
+# @name createAccount
+POST {{host}}/api/accounts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Main Checking",
+  "type": "CHECKING",
+  "currency": "USD",
+  "openingBalance": 1000.00
+}
+
+@accountId = {{createAccount.response.body.id}}
+
+### 4. Create a category
+# @name createCategory
+POST {{host}}/api/categories
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Salary",
+  "type": "INCOME"
+}
+
+@categoryId = {{createCategory.response.body.id}}
+
+### 5. Record a transaction
+POST {{host}}/api/transactions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "accountId": {{accountId}},
+  "categoryId": {{categoryId}},
+  "type": "INCOME",
+  "amount": 2500.00,
+  "description": "October salary",
+  "date": "2026-10-01"
+}
+
+### 6. List transactions with filters
+GET {{host}}/api/transactions?type=INCOME&from=2026-10-01&to=2026-10-31&page=0&size=20
+Authorization: Bearer {{token}}
+
+### 7. Financial overview
+GET {{host}}/api/insights/overview
+Authorization: Bearer {{token}}
+
+### 8. Breakdown by category
+GET {{host}}/api/insights/by-category
+Authorization: Bearer {{token}}
+
+### 9. Monthly trend
+GET {{host}}/api/insights/monthly
+Authorization: Bearer {{token}}
+
